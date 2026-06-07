@@ -4,6 +4,7 @@ export interface Castle {
   lat: number;
   lng: number;
   type: "castle" | "fortress";
+  wikipedia?: string;
 }
 
 const OVERPASS_URL = "https://overpass-api.de/api/interpreter";
@@ -31,6 +32,14 @@ area["name"="Bayern"]["admin_level"="4"]->.bavaria;
   way["historic"="fortress"](area.rlp);
   way["historic"="fortress"](area.bw);
   way["historic"="fortress"](area.bavaria);
+  relation["historic"="castle"](area.hessen);
+  relation["historic"="castle"](area.rlp);
+  relation["historic"="castle"](area.bw);
+  relation["historic"="castle"](area.bavaria);
+  relation["historic"="fortress"](area.hessen);
+  relation["historic"="fortress"](area.rlp);
+  relation["historic"="fortress"](area.bw);
+  relation["historic"="fortress"](area.bavaria);
 );
 out center;
 `.trim();
@@ -39,6 +48,19 @@ out center;
 let cache: Castle[] | null = null;
 let cacheTime = 0;
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+const NOTABLE_CASTLE_TYPES = new Set(["defensive", "stately", "palace", "fortress"]);
+
+function scoreElement(tags: Record<string, string>): number {
+  let score = 0;
+  if (tags.wikipedia || tags.wikidata) score += 1;
+  if (tags.opening_hours) score += 1;
+  if (tags.website) score += 1;
+  if (NOTABLE_CASTLE_TYPES.has(tags.castle_type) || tags.historic === "fortress")
+    score += 1;
+  if (tags.tourism === "attraction") score += 1;
+  return score;
+}
 
 export async function fetchCastles(): Promise<Castle[]> {
   if (cache && Date.now() - cacheTime < CACHE_TTL_MS) return cache;
@@ -63,6 +85,7 @@ export async function fetchCastles(): Promise<Castle[]> {
       const lng = el.lon ?? el.center?.lon;
       return lat && lng && (el.tags?.name || el.tags?.["name:de"] || el.tags?.["name:en"]);
     })
+    .filter((el) => scoreElement(el.tags ?? {}) >= 3)
     .map((el) => ({
       id: `${el.type}-${el.id}`,
       name:
@@ -73,6 +96,7 @@ export async function fetchCastles(): Promise<Castle[]> {
       lat: el.lat ?? el.center.lat,
       lng: el.lon ?? el.center.lon,
       type: (el.tags?.historic === "fortress" ? "fortress" : "castle") as Castle["type"],
+      wikipedia: el.tags?.wikipedia,
     }));
 
   cache = castles;

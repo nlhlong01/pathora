@@ -7,19 +7,22 @@ interface PopupCardProps {
   lat: number;
   lng: number;
   type: "castle" | "fortress";
+  wikipedia?: string;
 }
 
-export default function PopupCard({ name, lat, lng, type }: PopupCardProps) {
+export default function PopupCard({ name, lat, lng, type, wikipedia }: PopupCardProps) {
   const [photo, setPhoto] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`/api/photo?name=${encodeURIComponent(name)}`)
+    const params = new URLSearchParams({ name });
+    if (wikipedia) params.set("wikipedia", wikipedia);
+    fetch(`/api/photo?${params.toString()}`)
       .then((r) => r.json())
       .then((d) => setPhoto(d.photo))
       .catch(() => setPhoto(null))
       .finally(() => setLoading(false));
-  }, [name]);
+  }, [name, wikipedia]);
 
   const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
   const label = type === "fortress" ? "Fortress" : "Castle";

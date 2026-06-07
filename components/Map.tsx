@@ -14,6 +14,7 @@ interface Castle {
   lat: number;
   lng: number;
   type: "castle" | "fortress";
+  wikipedia?: string;
 }
 
 const castleIcon = L.icon({
@@ -65,6 +66,7 @@ function ClusteredMarkers({ castles }: { castles: Castle[] }) {
               lat: castle.lat,
               lng: castle.lng,
               type: castle.type,
+              wikipedia: castle.wikipedia,
             })
           );
         });
