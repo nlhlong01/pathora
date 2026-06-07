@@ -1,0 +1,6 @@
+- add 2 map layers with filtering toggles on the left side
+  - cycle paths
+  - train routes
+- links to Google Maps are unaligned because it's based on the exact coordinates
+- locate the user to their shared location
+- There are so many results. Many of them are lesser known locations
